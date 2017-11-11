@@ -20,3 +20,4 @@ bin/
 # tox files
 .cache/
 .coverage
+electrum_data
