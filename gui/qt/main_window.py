@@ -138,7 +138,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.send_tab = self.create_send_tab()
         self.receive_tab = self.create_receive_tab()
         self.addresses_tab = self.create_addresses_tab()
-        self.utxo_tab = self.create_utxo_tab()
+        self.bad_coins = self.create_utxo_tab_bad()
+        self.good_tab = self.create_utxo_tab_good()
         self.console_tab = self.create_console_tab()
         self.contacts_tab = self.create_contacts_tab()
         tabs.addTab(self.create_history_tab(), QIcon(":icons/tab_history.png"), _('History'))
@@ -150,11 +151,12 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             tab.tab_description = description
             tab.tab_pos = len(tabs)
             tab.tab_name = name
-            if self.config.get('show_{}_tab'.format(name), False):
-                tabs.addTab(tab, icon, description.replace("&", ""))
+            # if self.config.get('show_{}_tab'.format(name), False):
+            tabs.addTab(tab, icon, description.replace("&", ""))
 
         add_optional_tab(tabs, self.addresses_tab, QIcon(":icons/tab_addresses.png"), _("&Addresses"), "addresses")
-        add_optional_tab(tabs, self.utxo_tab, QIcon(":icons/tab_coins.png"), _("Co&ins"), "utxo")
+        add_optional_tab(tabs, self.good_tab, QIcon(":icons/tab_coins.png"), _("Good Co&ins"), "utxo")
+        add_optional_tab(tabs, self.bad_coins, QIcon(":icons/tab_coins.png"), _("Bad Coins"), "utxo")
         add_optional_tab(tabs, self.contacts_tab, QIcon(":icons/tab_contacts.png"), _("Con&tacts"), "contacts")
         add_optional_tab(tabs, self.console_tab, QIcon(":icons/tab_console.png"), _("Con&sole"), "console")
 
@@ -335,7 +337,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         # address used to create a dummy transaction and estimate transaction fee
         self.history_list.update()
         self.address_list.update()
-        self.utxo_list.update()
+        self.bad_coins_list.update()
         self.need_update.set()
         # Once GUI has been initialized check if we want to announce something since the callback has been called before the GUI was initialized
         self.notify_transactions()
@@ -489,11 +491,11 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             item_name = (_("Hide") if is_shown else _("Show")) + " " + tab.tab_description
             tab.menu_action = view_menu.addAction(item_name, lambda: self.toggle_tab(tab))
 
-        view_menu = menubar.addMenu(_("&View"))
-        add_toggle_action(view_menu, self.addresses_tab)
-        add_toggle_action(view_menu, self.utxo_tab)
-        add_toggle_action(view_menu, self.contacts_tab)
-        add_toggle_action(view_menu, self.console_tab)
+        # view_menu = menubar.addMenu(_("&View"))
+        # add_toggle_action(view_menu, self.addresses_tab)
+        # add_toggle_action(view_menu, self.good_tab)
+        # add_toggle_action(view_menu, self.contacts_tab)
+        # add_toggle_action(view_menu, self.console_tab)
 
         tools_menu = menubar.addMenu(_("&Tools"))
 
@@ -731,7 +733,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.history_list.update()
         self.request_list.update()
         self.address_list.update()
-        self.utxo_list.update()
+        self.bad_coins_list.update()
         self.contact_list.update()
         self.invoice_list.update()
         self.update_completions()
@@ -1564,7 +1566,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
     def set_frozen_state(self, addrs, freeze):
         self.wallet.set_frozen_state(addrs, freeze)
         self.address_list.update()
-        self.utxo_list.update()
+        self.bad_coins_list.update()
         self.update_fee()
 
     def create_list_tab(self, l, list_header=None):
@@ -1588,9 +1590,14 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.address_list = l = AddressList(self)
         return self.create_list_tab(l, l.get_list_header())
 
-    def create_utxo_tab(self):
-        from .utxo_list import UTXOList
-        self.utxo_list = l = UTXOList(self)
+    def create_utxo_tab_good(self):
+        from .utxo_list import UTXOListGood
+        self.good_coins_list = l = UTXOListGood(self)
+        return self.create_list_tab(l)
+
+    def create_utxo_tab_bad(self):
+        from .utxo_list import UTXOListBad
+        self.bad_coins_list = l = UTXOListBad(self)
         return self.create_list_tab(l)
 
     def create_contacts_tab(self):
